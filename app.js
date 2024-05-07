@@ -19,6 +19,7 @@ const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
     type_product: { type: String, required: true },
     stock: { type: Number, required: true },
+    category: [{ type: String }],
     is_aviable: { type: Boolean, required: true },
     price: {
         regular: { type: Number, required: true },
@@ -158,6 +159,84 @@ app.delete('/api/products/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+// Búsqueda de productos por categoría con paginación
+app.get('/api/products/category/:category', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+
+        const category = req.params.category;
+        const page = parseInt(req.query.page) || 1; // Página actual, por defecto es la primera
+        const perPage = 5; // Número de productos por página
+
+        // Contar el total de productos en la categoría
+        const totalCount = await ProductModel.countDocuments({ category: category });
+
+        const totalPages = Math.ceil(totalCount / perPage); // Calcular el total de páginas
+
+        const products = await ProductModel.find({ category: category })
+                                           .skip((page - 1) * perPage)
+                                           .limit(perPage);
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found in this category' });
+        }
+
+        // Enviar la respuesta JSON con la información de paginación
+        res.json({
+            products: products,
+            currentPage: page,
+            totalPages: totalPages,
+            totalRecords: totalCount
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Búsqueda de productos por título con paginación
+app.get('/api/products/title/:title', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+
+        const title = req.params.title;
+        const page = parseInt(req.query.page) || 1; // Página actual, por defecto es la primera
+        const perPage = 5; // Número de productos por página
+
+        // Contar el total de productos con el título proporcionado
+        const totalCount = await ProductModel.countDocuments({ title: { $regex: title, $options: 'i' } });
+
+        const totalPages = Math.ceil(totalCount / perPage); // Calcular el total de páginas
+
+        const products = await ProductModel.find({ title: { $regex: title, $options: 'i' } })
+                                           .skip((page - 1) * perPage)
+                                           .limit(perPage);
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found with this title' });
+        }
+
+        // Enviar la respuesta JSON con la información de paginación
+        res.json({
+            products: products,
+            currentPage: page,
+            totalPages: totalPages,
+            totalRecords: totalCount
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 // Middleware para manejar errores 404
 app.use((req, res) => {
