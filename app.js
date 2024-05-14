@@ -1,12 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose'); // Importa mongoose aquí
 const bodyParser = require('body-parser');
-
+const cors = require('cors'); 
 const app = express();
 const PORT = 3000;
 
 app.use(bodyParser.json());
-
+app.use(cors);
 // Conexión a MongoDB
 mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mongodb.net/product', {
     useNewUrlParser: true,
