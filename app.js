@@ -1,12 +1,13 @@
 const express = require('express');
-const mongoose = require('mongoose'); // Importa mongoose aquí
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const cors = require('cors'); 
+const cors = require('cors');
 const app = express();
 const PORT = 3000;
 
 app.use(bodyParser.json());
-app.use(cors);
+app.use(cors());
+
 // Conexión a MongoDB
 mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mongodb.net/product', {
     useNewUrlParser: true,
@@ -63,18 +64,15 @@ app.get('/api/products', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-        // Define los campos que deseas devolver
         const projection = {
             id: 1,
             stock: 1,
             is_aviable: 1,
             title: 1,
             price: 1,
-            description_short:1
-            // Agrega otros campos que desees incluir en la respuesta
+            description_short: 1
         };
 
-        // Realiza la consulta con la proyección de campos
         const products = await ProductModel.find({}, projection);
 
         res.json(products);
@@ -131,7 +129,7 @@ app.patch('/api/products/:id', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        const product = await ProductModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const product = await ProductModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -150,7 +148,7 @@ app.delete('/api/products/:id', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        const product = await ProductModel.findByIdAndDelete(req.params.id);
+        const product = await ProductModel.findOneAndDelete({ id: req.params.id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -159,6 +157,7 @@ app.delete('/api/products/:id', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 // Búsqueda de productos por categoría con paginación
 app.get('/api/products/category/:category', async (req, res) => {
     try {
@@ -170,23 +169,16 @@ app.get('/api/products/category/:category', async (req, res) => {
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
         const category = req.params.category;
-        const page = parseInt(req.query.page) || 1; // Página actual, por defecto es la primera
-        const perPage = 5; // Número de productos por página
+        const page = parseInt(req.query.page) || 1;
+        const perPage = 5;
 
-        // Contar el total de productos en la categoría
         const totalCount = await ProductModel.countDocuments({ category: category });
-
-        const totalPages = Math.ceil(totalCount / perPage); // Calcular el total de páginas
+        const totalPages = Math.ceil(totalCount / perPage);
 
         const products = await ProductModel.find({ category: category })
                                            .skip((page - 1) * perPage)
                                            .limit(perPage);
 
-        if (products.length === 0) {
-            return res.status(404).json({ message: 'No products found in this category' });
-        }
-
-        // Enviar la respuesta JSON con la información de paginación
         res.json({
             products: products,
             currentPage: page,
@@ -209,23 +201,16 @@ app.get('/api/products/title/:title', async (req, res) => {
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
         const title = req.params.title;
-        const page = parseInt(req.query.page) || 1; // Página actual, por defecto es la primera
-        const perPage = 5; // Número de productos por página
+        const page = parseInt(req.query.page) || 1;
+        const perPage = 5;
 
-        // Contar el total de productos con el título proporcionado
         const totalCount = await ProductModel.countDocuments({ title: { $regex: title, $options: 'i' } });
-
-        const totalPages = Math.ceil(totalCount / perPage); // Calcular el total de páginas
+        const totalPages = Math.ceil(totalCount / perPage);
 
         const products = await ProductModel.find({ title: { $regex: title, $options: 'i' } })
                                            .skip((page - 1) * perPage)
                                            .limit(perPage);
 
-        if (products.length === 0) {
-            return res.status(404).json({ message: 'No products found with this title' });
-        }
-
-        // Enviar la respuesta JSON con la información de paginación
         res.json({
             products: products,
             currentPage: page,
@@ -236,7 +221,6 @@ app.get('/api/products/title/:title', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-
 
 // Middleware para manejar errores 404
 app.use((req, res) => {
