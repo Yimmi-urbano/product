@@ -19,6 +19,7 @@ const ProductSchema = new mongoose.Schema({
     id: { type: String, required: true },
     title: { type: String, required: true },
     type_product: { type: String, required: true },
+    image_default: [{ type: String, required: true }],
     stock: { type: Number, required: true },
     category: [{ type: String }],
     is_aviable: { type: Boolean, required: true },
