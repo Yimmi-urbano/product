@@ -69,6 +69,7 @@ app.get('/api/products', async (req, res) => {
             id: 1,
             stock: 1,
             is_aviable: 1,
+            image_default: 1,
             title: 1,
             price: 1,
             description_short: 1
