@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
-const PORT = 3000;
+const PORT = 6000;
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -16,13 +16,17 @@ mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mong
 
 // Modelo de producto
 const ProductSchema = new mongoose.Schema({
-    id: { type: String, required: true },
     title: { type: String, required: true },
+    sku: { type: String },
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
     stock: { type: Number, required: true },
     category: [{ type: String }],
-    is_aviable: { type: Boolean, required: true },
+    is_available: { type: Boolean, required: true },
+    is_trash: {
+        status: { type: Boolean },
+        date: { type: String }
+    },
     price: {
         regular: { type: Number, required: true },
         sale: { type: Number, required: true },
@@ -48,14 +52,12 @@ const ProductSchema = new mongoose.Schema({
     description_short: { type: String, required: true }
 });
 
-// Función para obtener el nombre de la colección basado en el dominio
+
 function getCollectionName(domain) {
     return `products-${domain}`;
 }
 
-// Rutas de la API
 
-// Obtener todos los productos
 app.get('/api/products', async (req, res) => {
     try {
         const domain = req.headers['domain'];
@@ -75,7 +77,8 @@ app.get('/api/products', async (req, res) => {
             description_short: 1
         };
 
-        const products = await ProductModel.find({}, projection);
+        // Filtrar los productos con is_trash:false
+        const products = await ProductModel.find({ 'is_trash.status': false }, projection);
 
         res.json(products);
     } catch (error) {
@@ -93,7 +96,7 @@ app.get('/api/products/:id', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-        const product = await ProductModel.findOne({ id: req.params.id });
+        const product = await ProductModel.findOne({ id: req.params.id, 'is_trash.status': false });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -150,11 +153,72 @@ app.delete('/api/products/:id', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        const product = await ProductModel.findOneAndDelete({ id: req.params.id });
+        const product = await ProductModel.findOneAndDelete({ _id: req.params.id });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
         res.json({ message: 'Product deleted' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+// Borrar un producto (actualizar su estado a trash)
+app.delete('/api/products/:id/trash', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+        
+        // Actualizar el estado de is_trash a true y guardar la fecha
+        const product = await ProductModel.findOneAndUpdate(
+            { _id: req.params.id },
+            { $set: { 'is_trash.status': true, 'is_trash.date': new Date().toISOString() } },
+            { new: true }
+        );
+        
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        
+        // Extracción de los datos necesarios
+        const { title, sku, _id } = product;
+
+        // Enviar mensaje de respuesta con el título, ID y SKU del producto
+        res.json({ message: 'Product status updated to trash', title, id: _id, sku });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Borrar un producto (actualizar su estado a trash)
+app.patch('/api/products/:id/recovery', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+        
+        // Actualizar el estado de is_trash a true y guardar la fecha
+        const product = await ProductModel.findOneAndUpdate(
+            { _id: req.params.id },
+            { $set: { 'is_trash.status': false, 'is_trash.date': new Date().toISOString() } },
+            { new: true }
+        );
+        
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        
+        // Extracción de los datos necesarios
+        const { title, sku, _id } = product;
+
+        // Enviar mensaje de respuesta con el título, ID y SKU del producto
+        res.json({ message: 'Product status updated to trash', title, id: _id, sku });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -174,12 +238,12 @@ app.get('/api/products/category/:category', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const perPage = 5;
 
-        const totalCount = await ProductModel.countDocuments({ category: category });
+        const totalCount = await ProductModel.countDocuments({ category: category, 'is_trash.status': false });
         const totalPages = Math.ceil(totalCount / perPage);
 
-        const products = await ProductModel.find({ category: category })
-                                           .skip((page - 1) * perPage)
-                                           .limit(perPage);
+        const products = await ProductModel.find({ category: category, 'is_trash.status': false })
+            .skip((page - 1) * perPage)
+            .limit(perPage);
 
         res.json({
             products: products,
@@ -206,12 +270,12 @@ app.get('/api/products/title/:title', async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const perPage = 5;
 
-        const totalCount = await ProductModel.countDocuments({ title: { $regex: title, $options: 'i' } });
+        const totalCount = await ProductModel.countDocuments({ title: { $regex: title, $options: 'i' }, 'is_trash.status': false });
         const totalPages = Math.ceil(totalCount / perPage);
 
-        const products = await ProductModel.find({ title: { $regex: title, $options: 'i' } })
-                                           .skip((page - 1) * perPage)
-                                           .limit(perPage);
+        const products = await ProductModel.find({ title: { $regex: title, $options: 'i' }, 'is_trash.status': false })
+            .skip((page - 1) * perPage)
+            .limit(perPage);
 
         res.json({
             products: products,
