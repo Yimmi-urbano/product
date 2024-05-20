@@ -8,13 +8,11 @@ const PORT = 6000;
 app.use(bodyParser.json());
 app.use(cors());
 
-// Conexión a MongoDB
 mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mongodb.net/product', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
 
-// Modelo de producto
 const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
     sku: { type: String },
@@ -52,11 +50,9 @@ const ProductSchema = new mongoose.Schema({
     description_short: { type: String, required: true }
 });
 
-
 function getCollectionName(domain) {
     return `products-${domain}`;
 }
-
 
 app.get('/api/products', async (req, res) => {
     try {
