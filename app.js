@@ -193,7 +193,7 @@ app.delete('/api/products/:id/trash', async (req, res) => {
     }
 });
 
-// Borrar un producto (actualizar su estado a trash)
+// Recuperar un producto (actualizar su estado a trash)
 app.patch('/api/products/:id/recovery', async (req, res) => {
     try {
         const domain = req.headers['domain'];
