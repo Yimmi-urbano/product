@@ -66,17 +66,28 @@ app.get('/api/products', async (req, res) => {
         const projection = {
             id: 1,
             stock: 1,
-            is_aviable: 1,
+            is_available: 1,
             image_default: 1,
             title: 1,
             price: 1,
             description_short: 1
         };
 
-        // Filtrar los productos con is_trash:false
-        const products = await ProductModel.find({ 'is_trash.status': false }, projection);
+        const page = parseInt(req.query.page) || 1;
+        const limit = 9;
+        const skip = (page - 1) * limit;
 
-        res.json(products);
+        const totalProducts = await ProductModel.countDocuments({ 'is_trash.status': false });
+        const products = await ProductModel.find({ 'is_trash.status': false }, projection)
+                                           .skip(skip)
+                                           .limit(limit);
+
+        res.json({
+            products,
+            page,
+            totalPages: Math.ceil(totalProducts / limit),
+            totalProducts
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
