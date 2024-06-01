@@ -74,7 +74,7 @@ app.get('/api/products', async (req, res) => {
         };
 
         const page = parseInt(req.query.page) || 1;
-        const limit = 9;
+        const limit = 8;
         const skip = (page - 1) * limit;
 
         const totalProducts = await ProductModel.countDocuments({ 'is_trash.status': false });
@@ -244,7 +244,7 @@ app.get('/api/products/category/:category', async (req, res) => {
 
         const category = req.params.category;
         const page = parseInt(req.query.page) || 1;
-        const perPage = 5;
+        const perPage = 8;
 
         const totalCount = await ProductModel.countDocuments({ category: category, 'is_trash.status': false });
         const totalPages = Math.ceil(totalCount / perPage);
@@ -276,7 +276,7 @@ app.get('/api/products/title/:title', async (req, res) => {
 
         const title = req.params.title;
         const page = parseInt(req.query.page) || 1;
-        const perPage = 5;
+        const perPage = 8;
 
         const totalCount = await ProductModel.countDocuments({ title: { $regex: title, $options: 'i' }, 'is_trash.status': false });
         const totalPages = Math.ceil(totalCount / perPage);
