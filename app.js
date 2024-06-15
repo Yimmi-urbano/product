@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
-const PORT = 6000;
+const PORT = 4600;
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -92,6 +92,27 @@ app.get('/api/products', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// Obtener todas las categorías únicas
+app.get('/api/categories', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+        console.log(collectionName)
+        const products = await ProductModel.find();
+       
+        const allCategories = [...new Set(products.flatMap(item => item.category))];
+
+        res.json(allCategories);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 // Obtener un producto por ID
 app.get('/api/products/:id', async (req, res) => {
