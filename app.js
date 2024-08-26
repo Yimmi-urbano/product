@@ -162,7 +162,7 @@ app.patch('/api/products/:id', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        const product = await ProductModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        const product = await ProductModel.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
         
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
