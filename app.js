@@ -19,7 +19,12 @@ const ProductSchema = new mongoose.Schema({
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
     stock: { type: Number, required: true },
-    category: [{ type: String }],
+    category: [
+        {
+          idcat: { type: String, required: true },
+          slug: { type: String, required: true }
+        }
+      ],
     is_available: { type: Boolean, required: true },
     is_trash: {
         status: { type: Boolean },
@@ -102,7 +107,6 @@ app.get('/api/categories', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        console.log(collectionName)
         const products = await ProductModel.find();
        
         const allCategories = [...new Set(products.flatMap(item => item.category))];
