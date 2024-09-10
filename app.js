@@ -258,7 +258,7 @@ app.patch('/api/products/:id/recovery', async (req, res) => {
 });
 
 // Búsqueda de productos por categoría con paginación
-app.get('/api/products/category/:category', async (req, res) => {
+app.get('/api/products/category/:categorySlug', async (req, res) => {
     try {
         const domain = req.headers['domain'];
         if (!domain) {
@@ -267,27 +267,35 @@ app.get('/api/products/category/:category', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-        const category = req.params.category;
+        const categorySlug = req.params.categorySlug;
         const page = parseInt(req.query.page) || 1;
         const perPage = 8;
 
-        const totalCount = await ProductModel.countDocuments({ category: category, 'is_trash.status': false });
+        // Usamos la propiedad `category.slug` para buscar
+        const totalCount = await ProductModel.countDocuments({
+            'category.slug': categorySlug,
+            'is_trash.status': false
+        });
         const totalPages = Math.ceil(totalCount / perPage);
 
-        const products = await ProductModel.find({ category: category, 'is_trash.status': false })
+        const products = await ProductModel.find({
+            'category.slug': categorySlug,
+            'is_trash.status': false
+        })
             .skip((page - 1) * perPage)
             .limit(perPage);
 
         res.json({
-            products: products,
+            products,
             currentPage: page,
-            totalPages: totalPages,
+            totalPages,
             totalRecords: totalCount
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 // Búsqueda de productos por título con paginación
 app.get('/api/products/title/:title', async (req, res) => {
