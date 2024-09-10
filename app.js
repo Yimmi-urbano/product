@@ -15,17 +15,18 @@ mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mong
 
 const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    id_product:{type: String},
+    id_product: { type: String },
     sku: { type: String },
+    slug: { type: String },
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
     stock: { type: Number, required: true },
     category: [
         {
-          idcat: { type: String, required: true },
-          slug: { type: String, required: true }
+            idcat: { type: String, required: true },
+            slug: { type: String, required: true }
         }
-      ],
+    ],
     is_available: { type: Boolean, required: true },
     is_trash: {
         status: { type: Boolean },
@@ -85,8 +86,8 @@ app.get('/api/products', async (req, res) => {
 
         const totalProducts = await ProductModel.countDocuments({ 'is_trash.status': false });
         const products = await ProductModel.find({ 'is_trash.status': false }, projection)
-                                           .skip(skip)
-                                           .limit(limit);
+            .skip(skip)
+            .limit(limit);
 
         res.json({
             products,
@@ -109,7 +110,7 @@ app.get('/api/categories', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
         const products = await ProductModel.find();
-       
+
         const allCategories = [...new Set(products.flatMap(item => item.category))];
 
         res.json(allCategories);
@@ -130,6 +131,27 @@ app.get('/api/products/:id', async (req, res) => {
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
         const product = await ProductModel.findOne({ _id: req.params.id, 'is_trash.status': false });
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
+// Obtener un producto por Slug Tienda Final
+app.get('/api/products/:slug', async (req, res) => {
+    try {
+        const domain = req.headers['domain'];
+        if (!domain) {
+            return res.status(400).json({ message: 'Domain header is required' });
+        }
+        const collectionName = getCollectionName(domain);
+        const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
+
+        const product = await ProductModel.findOne({ slug: req.params.slug, 'is_trash.status': false });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -168,7 +190,7 @@ app.patch('/api/products/:id', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
         const product = await ProductModel.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
-        
+
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
@@ -205,18 +227,18 @@ app.delete('/api/products/:id/trash', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        
+
         // Actualizar el estado de is_trash a true y guardar la fecha
         const product = await ProductModel.findOneAndUpdate(
             { _id: req.params.id },
             { $set: { 'is_trash.status': true, 'is_trash.date': new Date().toISOString() } },
             { new: true }
         );
-        
+
         if (!product) {
-            return res.status(404).json({ message: 'Product not found',status: false });
+            return res.status(404).json({ message: 'Product not found', status: false });
         }
-        
+
         // Extracción de los datos necesarios
         const { title, sku, _id } = product;
 
@@ -236,18 +258,18 @@ app.patch('/api/products/:id/recovery', async (req, res) => {
         }
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        
+
         // Actualizar el estado de is_trash a true y guardar la fecha
         const product = await ProductModel.findOneAndUpdate(
             { _id: req.params.id },
             { $set: { 'is_trash.status': false, 'is_trash.date': new Date().toISOString() } },
             { new: true }
         );
-        
+
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        
+
         // Extracción de los datos necesarios
         const { title, sku, _id } = product;
 
