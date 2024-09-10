@@ -142,7 +142,7 @@ app.get('/api/products/:id', async (req, res) => {
 
 
 // Obtener un producto por Slug Tienda Final
-app.get('/api/products/:slug', async (req, res) => {
+app.get('/api/client/products/:slug', async (req, res) => {
     try {
         const domain = req.headers['domain'];
         if (!domain) {
