@@ -15,6 +15,7 @@ mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mong
 
 const ProductSchema = new mongoose.Schema({
     title: { type: String, required: true },
+    id_product:{type: String},
     sku: { type: String },
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
@@ -128,7 +129,7 @@ app.get('/api/products/:id', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-        const product = await ProductModel.findOne({ _id: req.params.id, 'is_trash.status': false });
+        const product = await ProductModel.findOne({ id_product: req.params.id, 'is_trash.status': false });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
