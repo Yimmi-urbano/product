@@ -151,8 +151,6 @@ app.get('/api/client/products/:slug', async (req, res) => {
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-        console.log(req.params.slug)
-
         const product = await ProductModel.findOne({ slug: req.params.slug, 'is_trash.status': false });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
