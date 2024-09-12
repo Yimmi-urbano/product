@@ -208,13 +208,42 @@ app.patch('/api/products/:id', async (req, res) => {
         if (!domain) {
             return res.status(400).json({ message: 'Domain header is required' });
         }
+        
         const collectionName = getCollectionName(domain);
         const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
-        const product = await ProductModel.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true });
+
+        let updateData = req.body;
+
+        // Si se está actualizando el título, generar un nuevo slug
+        if (updateData.title) {
+            let generatedSlug = slugify(updateData.title, { lower: true, strict: true });
+            let existingProduct = await ProductModel.findOne({ slug: generatedSlug });
+
+            // Verificar si el slug ya existe, y agregar "-2" si es necesario
+            if (existingProduct && existingProduct._id.toString() !== req.params.id) {
+                let suffix = 2;
+                let newSlug = `${generatedSlug}-${suffix}`;
+                while (await ProductModel.findOne({ slug: newSlug })) {
+                    suffix++;
+                    newSlug = `${generatedSlug}-${suffix}`;
+                }
+                generatedSlug = newSlug;
+            }
+
+            updateData.slug = generatedSlug;
+        }
+
+        // Actualizar el producto
+        const product = await ProductModel.findOneAndUpdate(
+            { _id: req.params.id }, 
+            updateData, 
+            { new: true }
+        );
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
+
         res.json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
