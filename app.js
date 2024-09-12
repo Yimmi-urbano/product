@@ -78,7 +78,8 @@ app.get('/api/products', async (req, res) => {
             image_default: 1,
             title: 1,
             price: 1,
-            description_short: 1
+            description_short: 1,
+            slug:1
         };
 
         const page = parseInt(req.query.page) || 1;
