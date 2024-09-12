@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const slugify = require('slugify');
 const cors = require('cors');
 const app = express();
 const PORT = 4600;
@@ -167,12 +168,32 @@ app.post('/api/products', async (req, res) => {
     if (!domain) {
         return res.status(400).json({ message: 'Domain header is required' });
     }
+    
     const collectionName = getCollectionName(domain);
     const ProductModel = mongoose.model('Product', ProductSchema, collectionName);
 
-    const product = new ProductModel(req.body);
-
+    let productData = req.body;
+    
     try {
+        // Generar slug basado en el título
+        let generatedSlug = slugify(productData.title, { lower: true, strict: true });
+        let existingProduct = await ProductModel.findOne({ slug: generatedSlug });
+
+        // Si ya existe un producto con el slug generado, agregar "-2"
+        if (existingProduct) {
+            let suffix = 2;
+            let newSlug = `${generatedSlug}-${suffix}`;
+            while (await ProductModel.findOne({ slug: newSlug })) {
+                suffix++;
+                newSlug = `${generatedSlug}-${suffix}`;
+            }
+            generatedSlug = newSlug;
+        }
+
+        productData.slug = generatedSlug;
+
+        // Crear un nuevo producto
+        const product = new ProductModel(productData);
         const newProduct = await product.save();
         res.status(201).json(newProduct);
     } catch (error) {
