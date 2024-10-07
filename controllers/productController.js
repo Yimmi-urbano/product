@@ -42,7 +42,7 @@ exports.getProducts = async (req, res) => {
         const skip = (page - 1) * limit;
 
         // Encontrar todos los productos para el dominio dado y que no están en papelera
-        const products = await ProductModel.find({
+        const products = await DomainProductModel.find({
             domain,
             'is_trash.status': false // Filtrar productos que no están en papelera
         })
@@ -51,7 +51,7 @@ exports.getProducts = async (req, res) => {
         .select('_id stock is_available image_default title price description_short slug');
 
         // Contar el total de productos que cumplen con la condición
-        const totalProducts = await ProductModel.countDocuments({
+        const totalProducts = await DomainProductModel.countDocuments({
             domain,
             'is_trash.status': false // Contar solo productos que no están en papelera
         });
