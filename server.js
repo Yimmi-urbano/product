@@ -2,7 +2,10 @@
 const mongoose = require('mongoose');
 const app = require('./app');
 
+
+
 const PORT = 4600;
+
 
 mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mongodb.net/data-creceidea', {
     useNewUrlParser: true,
@@ -10,6 +13,8 @@ mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mong
 })
     .then(() => {
         console.log('Connected to MongoDB');
+
+
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });

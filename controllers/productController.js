@@ -1,4 +1,3 @@
-
 const slugify = require('slugify');
 const DomainProductModel = require('../models/domainProductModel');
 
@@ -9,20 +8,13 @@ exports.createProduct = async (req, res) => {
     try {
         let generatedSlug = slugify(productData.title, { lower: true, strict: true });
 
-        let domainDoc = await DomainProductModel.findOne({ domain });
-        if (!domainDoc) {
-            domainDoc = new DomainProductModel({
-                domain,
-                products: []
-            });
-        }
-
-        let existingProduct = domainDoc.products.find(p => p.slug === generatedSlug);
+        // Verificar si ya existe un producto con el mismo slug
+        let existingProduct = await DomainProductModel.findOne({ domain, slug: generatedSlug });
 
         if (existingProduct) {
             let suffix = 2;
             let newSlug = `${generatedSlug}-${suffix}`;
-            while (domainDoc.products.find(p => p.slug === newSlug)) {
+            while (await DomainProductModel.findOne({ domain, slug: newSlug })) {
                 suffix++;
                 newSlug = `${generatedSlug}-${suffix}`;
             }
@@ -30,11 +22,12 @@ exports.createProduct = async (req, res) => {
         }
 
         productData.slug = generatedSlug;
+        productData.domain = domain; // Guardar el dominio dentro del producto
 
-        domainDoc.products.push(productData);
-
-        await domainDoc.save();
-        res.status(201).json(productData);
+        // Crear un nuevo producto
+        const newProduct = new DomainProductModel(productData);
+        await newProduct.save();
+        res.status(201).json(newProduct);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -44,50 +37,17 @@ exports.getProducts = async (req, res) => {
     try {
         const domain = req.domain;
 
-        const projection = {
-            _id: 1,
-            stock: 1,
-            is_available: 1,
-            image_default: 1,
-            title: 1,
-            price: 1,
-            description_short: 1,
-            slug: 1
-        };
-
         const page = parseInt(req.query.page) || 1;
         const limit = 8;
         const skip = (page - 1) * limit;
 
-        // Encontrar el documento para el dominio dado
-        const domainDoc = await DomainProductModel.findOne({ domain });
+        // Encontrar todos los productos para el dominio dado
+        const products = await DomainProductModel.find({ domain })
+            .skip(skip)
+            .limit(limit)
+            .select('_id stock is_available image_default title price description_short slug');
 
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Filtrar productos que no están en la papelera (is_trash.status = false)
-        const filteredProducts = domainDoc.products.filter(product => !product.is_trash.status);
-
-        // Obtener la cantidad total de productos filtrados
-        const totalProducts = filteredProducts.length;
-
-        // Paginación
-        const products = filteredProducts
-            .slice(skip, skip + limit)
-            .map(product => {
-                // Proyectar solo los campos seleccionados
-                return {
-                    _id: product._id,
-                    stock: product.stock,
-                    is_available: product.is_available,
-                    image_default: product.image_default,
-                    title: product.title,
-                    price: product.price,
-                    description_short: product.description_short,
-                    slug: product.slug
-                };
-            });
+        const totalProducts = await DomainProductModel.countDocuments({ domain });
 
         res.json({
             products,
@@ -105,15 +65,8 @@ exports.getProductById = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Encontrar el documento del dominio dado
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Buscar el producto por ID dentro del array de productos y que no esté en la papelera
-        const product = domainDoc.products.find(p => p._id.toString() === productId && !p.is_trash.status);
+        // Buscar el producto por ID y dominio
+        const product = await DomainProductModel.findOne({ domain, _id: productId, 'is_trash.status': false });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -131,15 +84,8 @@ exports.updateProduct = async (req, res) => {
         const productId = req.params.id;
         let updateData = req.body;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Buscar el producto dentro del array
-        let product = domainDoc.products.find(p => p._id.toString() === productId);
+        // Buscar el producto por ID y dominio
+        let product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -150,12 +96,12 @@ exports.updateProduct = async (req, res) => {
             let generatedSlug = slugify(updateData.title, { lower: true, strict: true });
 
             // Verificar si ya existe otro producto con el mismo slug
-            const existingProduct = domainDoc.products.find(p => p.slug === generatedSlug && p._id.toString() !== productId);
+            const existingProduct = await DomainProductModel.findOne({ domain, slug: generatedSlug, _id: { $ne: productId } });
 
             if (existingProduct) {
                 let suffix = 2;
                 let newSlug = `${generatedSlug}-${suffix}`;
-                while (domainDoc.products.find(p => p.slug === newSlug)) {
+                while (await DomainProductModel.findOne({ domain, slug: newSlug })) {
                     suffix++;
                     newSlug = `${generatedSlug}-${suffix}`;
                 }
@@ -166,10 +112,8 @@ exports.updateProduct = async (req, res) => {
         }
 
         // Actualizar el producto con los nuevos datos
-        product = Object.assign(product, updateData);
-
-        // Guardar el documento actualizado
-        await domainDoc.save();
+        Object.assign(product, updateData);
+        await product.save();
 
         res.json(product);
     } catch (error) {
@@ -184,27 +128,20 @@ exports.getProductsByCategory = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const perPage = 8;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
         // Filtrar los productos por el `category.slug`
-        const filteredProducts = domainDoc.products.filter(product => 
-            product.category.some(cat => cat.slug === categorySlug) &&
-            product.is_trash.status === false
-        );
+        const filteredProducts = await DomainProductModel.find({ 
+            domain, 
+            'category.slug': categorySlug, 
+            'is_trash.status': false 
+        })
+        .skip((page - 1) * perPage)
+        .limit(perPage);
 
-        const totalCount = filteredProducts.length;
+        const totalCount = await DomainProductModel.countDocuments({ domain, 'category.slug': categorySlug, 'is_trash.status': false });
         const totalPages = Math.ceil(totalCount / perPage);
-        
-        // Paginación
-        const paginatedProducts = filteredProducts.slice((page - 1) * perPage, page * perPage);
 
         res.json({
-            products: paginatedProducts,
+            products: filteredProducts,
             currentPage: page,
             totalPages,
             totalRecords: totalCount
@@ -219,17 +156,12 @@ exports.getProductBySlug = async (req, res) => {
         const domain = req.domain;
         const productSlug = req.params.slug;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Buscar el producto por slug y verificar que no esté en la papelera
-        const product = domainDoc.products.find(product => 
-            product.slug === productSlug && product.is_trash.status === false
-        );
+        // Buscar el producto por slug y dominio
+        const product = await DomainProductModel.findOne({ 
+            domain, 
+            slug: productSlug, 
+            'is_trash.status': false 
+        });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -246,15 +178,8 @@ exports.trashProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Encontrar el producto por ID
-        const product = domainDoc.products.find(p => p._id.toString() === productId);
+        // Buscar el producto por ID y dominio
+        const product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -264,7 +189,7 @@ exports.trashProduct = async (req, res) => {
         product.is_trash.status = true;
         product.is_trash.date = new Date().toISOString();
 
-        await domainDoc.save();
+        await product.save();
 
         res.json({
             message: 'Product status updated to trash',
@@ -282,15 +207,8 @@ exports.recoverProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
-
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Encontrar el producto por ID
-        const product = domainDoc.products.find(p => p._id.toString() === productId);
+        // Buscar el producto por ID y dominio
+        const product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
@@ -300,7 +218,7 @@ exports.recoverProduct = async (req, res) => {
         product.is_trash.status = false;
         product.is_trash.date = new Date().toISOString();
 
-        await domainDoc.save();
+        await product.save();
 
         res.json({
             message: 'Product recovered from trash',
@@ -318,29 +236,18 @@ exports.deleteProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el documento del dominio
-        const domainDoc = await DomainProductModel.findOne({ domain });
+        // Buscar el producto por ID y dominio
+        const product = await DomainProductModel.findOne({ domain, _id: productId });
 
-        if (!domainDoc) {
-            return res.status(404).json({ message: 'No products found for this domain' });
-        }
-
-        // Buscar el índice del producto por ID
-        const productIndex = domainDoc.products.findIndex(p => p._id.toString() === productId);
-
-        if (productIndex === -1) {
+        if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Eliminar el producto del array de productos
-        domainDoc.products.splice(productIndex, 1);
-
-        // Guardar el documento del dominio
-        await domainDoc.save();
+        // Eliminar el producto
+        await product.remove();
 
         res.json({ message: 'Product deleted' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
