@@ -41,13 +41,20 @@ exports.getProducts = async (req, res) => {
         const limit = 8;
         const skip = (page - 1) * limit;
 
-        // Encontrar todos los productos para el dominio dado
-        const products = await DomainProductModel.find({ domain })
-            .skip(skip)
-            .limit(limit)
-            .select('_id stock is_available image_default title price description_short slug');
+        // Encontrar todos los productos para el dominio dado y que no están en papelera
+        const products = await ProductModel.find({
+            domain,
+            'is_trash.status': false // Filtrar productos que no están en papelera
+        })
+        .skip(skip)
+        .limit(limit)
+        .select('_id stock is_available image_default title price description_short slug');
 
-        const totalProducts = await DomainProductModel.countDocuments({ domain });
+        // Contar el total de productos que cumplen con la condición
+        const totalProducts = await ProductModel.countDocuments({
+            domain,
+            'is_trash.status': false // Contar solo productos que no están en papelera
+        });
 
         res.json({
             products,
