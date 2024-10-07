@@ -12,16 +12,13 @@ const ProductSchema = new mongoose.Schema({
         tag: { type: String }
     },
     title: { type: String, required: true },
-    slug: { type: String, required: true },
+    slug: { type: String},
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
-    stock: { type: Number, required: true },
-    category: [
-        {
-            idcat: { type: String, required: true },
-            slug: { type: String, required: true }
-        }
-    ],
+    stock: { type: Number },
+    category: [{
+        type: Object,
+    }],
     is_available: { type: Boolean, required: true },
     default_variations: [{ type: String }],
     atributos: [{
