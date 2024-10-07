@@ -1,19 +1,16 @@
-
+require('dotenv').config();
 const mongoose = require('mongoose');
 const app = require('./app');
 
+const PORT = process.env.PORT || 4600;
+const MONGO_URI = process.env.MONGO_URI;
 
-
-const PORT = 4600;
-
-
-mongoose.connect('mongodb+srv://data_user:wY1v50t8fX4lMA85@cluster0.entyyeb.mongodb.net/data-creceidea', {
+mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
     .then(() => {
         console.log('Connected to MongoDB');
-
 
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
