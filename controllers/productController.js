@@ -168,7 +168,7 @@ exports.getProductBySlug = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
+/* Descomentar cuando se tenga la funcionalidad de papelera para los clientes
 exports.trashProduct = async (req, res) => {
     try {
         const domain = req.domain;
@@ -195,6 +195,27 @@ exports.trashProduct = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+*/
+
+exports.trashProduct = async (req, res) => {
+    try {
+        const domain = req.domain;
+        const productId = req.params.id;
+
+        const product = await DomainProductModel.findOne({ domain, _id: productId });
+
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        await DomainProductModel.deleteOne({ _id: productId });
+
+        res.json({ message: 'Product permanently deleted', id: productId });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 exports.recoverProduct = async (req, res) => {
     try {
