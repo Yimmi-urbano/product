@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const ProductSchema = new mongoose.Schema({
-    domain: { type: String, required: true }, // Añadir dominio para la relación
+    domain: { type: String, required: true },
     is_trash: {
-        status: { type: Boolean, default: false }, // Inicializar en false
+        status: { type: Boolean, default: false },
         date: { type: String }
     },
     price: {
@@ -12,10 +12,10 @@ const ProductSchema = new mongoose.Schema({
         tag: { type: String }
     },
     title: { type: String, required: true },
-    slug: { type: String, unique: true }, // Hacer el slug único
+    slug: { type: String, unique: true },
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
-    stock: { type: Number, default: 0 }, // Inicializar stock en 0
+    stock: { type: Number, default: 0 }, 
     category: [{
         type: Object,
     }],
@@ -40,5 +40,4 @@ const ProductSchema = new mongoose.Schema({
     description_short: { type: String, required: true }
 });
 
-// Exportar el modelo de producto
 module.exports = mongoose.model('Product', ProductSchema);

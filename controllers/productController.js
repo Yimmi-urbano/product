@@ -8,7 +8,6 @@ exports.createProduct = async (req, res) => {
     try {
         let generatedSlug = slugify(productData.title, { lower: true, strict: true });
 
-        // Verificar si ya existe un producto con el mismo slug
         let existingProduct = await DomainProductModel.findOne({ domain, slug: generatedSlug });
 
         if (existingProduct) {
@@ -22,9 +21,8 @@ exports.createProduct = async (req, res) => {
         }
 
         productData.slug = generatedSlug;
-        productData.domain = domain; // Guardar el dominio dentro del producto
+        productData.domain = domain; 
 
-        // Crear un nuevo producto
         const newProduct = new DomainProductModel(productData);
         await newProduct.save();
         res.status(201).json(newProduct);
@@ -41,19 +39,17 @@ exports.getProducts = async (req, res) => {
         const limit = 8;
         const skip = (page - 1) * limit;
 
-        // Encontrar todos los productos para el dominio dado y que no están en papelera
         const products = await DomainProductModel.find({
             domain,
-            'is_trash.status': false // Filtrar productos que no están en papelera
+            'is_trash.status': false
         })
         .skip(skip)
         .limit(limit)
         .select('_id stock is_available image_default title price description_short slug');
 
-        // Contar el total de productos que cumplen con la condición
         const totalProducts = await DomainProductModel.countDocuments({
             domain,
-            'is_trash.status': false // Contar solo productos que no están en papelera
+            'is_trash.status': false
         });
 
         res.json({
@@ -72,7 +68,6 @@ exports.getProductById = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el producto por ID y dominio
         const product = await DomainProductModel.findOne({ domain, _id: productId, 'is_trash.status': false });
 
         if (!product) {
@@ -91,18 +86,15 @@ exports.updateProduct = async (req, res) => {
         const productId = req.params.id;
         let updateData = req.body;
 
-        // Buscar el producto por ID y dominio
         let product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Si se está actualizando el título, generar un nuevo slug
         if (updateData.title) {
             let generatedSlug = slugify(updateData.title, { lower: true, strict: true });
 
-            // Verificar si ya existe otro producto con el mismo slug
             const existingProduct = await DomainProductModel.findOne({ domain, slug: generatedSlug, _id: { $ne: productId } });
 
             if (existingProduct) {
@@ -118,7 +110,6 @@ exports.updateProduct = async (req, res) => {
             updateData.slug = generatedSlug;
         }
 
-        // Actualizar el producto con los nuevos datos
         Object.assign(product, updateData);
         await product.save();
 
@@ -135,7 +126,6 @@ exports.getProductsByCategory = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const perPage = 8;
 
-        // Filtrar los productos por el `category.slug`
         const filteredProducts = await DomainProductModel.find({ 
             domain, 
             'category.slug': categorySlug, 
@@ -163,7 +153,6 @@ exports.getProductBySlug = async (req, res) => {
         const domain = req.domain;
         const productSlug = req.params.slug;
 
-        // Buscar el producto por slug y dominio
         const product = await DomainProductModel.findOne({ 
             domain, 
             slug: productSlug, 
@@ -185,14 +174,12 @@ exports.trashProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el producto por ID y dominio
         const product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Actualizar el estado de is_trash a true
         product.is_trash.status = true;
         product.is_trash.date = new Date().toISOString();
 
@@ -214,14 +201,12 @@ exports.recoverProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el producto por ID y dominio
         const product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Actualizar el estado de is_trash a false
         product.is_trash.status = false;
         product.is_trash.date = new Date().toISOString();
 
@@ -243,14 +228,12 @@ exports.deleteProduct = async (req, res) => {
         const domain = req.domain;
         const productId = req.params.id;
 
-        // Buscar el producto por ID y dominio
         const product = await DomainProductModel.findOne({ domain, _id: productId });
 
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Eliminar el producto
         await product.remove();
 
         res.json({ message: 'Product deleted' });
