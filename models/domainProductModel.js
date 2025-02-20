@@ -38,7 +38,7 @@ const ProductSchema = new mongoose.Schema({
     }],
     description_long: { type: String, required: true },
     description_short: { type: String, required: true },
-    createdAt: { type: Date }
+    createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('Product', ProductSchema);
