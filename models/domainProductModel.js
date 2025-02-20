@@ -4,7 +4,7 @@ const ProductSchema = new mongoose.Schema({
     domain: { type: String, required: true },
     is_trash: {
         status: { type: Boolean, default: false },
-        date: { type: String }
+        date: { type: Date }
     },
     price: {
         regular: { type: Number, required: true },
@@ -37,7 +37,8 @@ const ProductSchema = new mongoose.Schema({
         }
     }],
     description_long: { type: String, required: true },
-    description_short: { type: String, required: true }
+    description_short: { type: String, required: true },
+    createdAt: { type: Date }
 });
 
 module.exports = mongoose.model('Product', ProductSchema);
