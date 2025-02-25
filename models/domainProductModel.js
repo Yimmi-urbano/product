@@ -12,7 +12,7 @@ const ProductSchema = new mongoose.Schema({
         tag: { type: String }
     },
     title: { type: String, required: true },
-    slug: { type: String, unique: true },
+    slug: { type: String},
     type_product: { type: String, required: true },
     image_default: [{ type: String, required: true }],
     stock: { type: Number, default: 0 }, 
