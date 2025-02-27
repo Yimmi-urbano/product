@@ -36,8 +36,8 @@ const ProductSchema = new mongoose.Schema({
             tag: { type: String }
         }
     }],
-    description_long: { type: String, required: true },
-    description_short: { type: String, required: true },
+    description_long: { type: String },
+    description_short: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 
