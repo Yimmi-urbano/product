@@ -19,6 +19,8 @@ app.get('/api/client/products/:slug', validateDomain, productController.getProdu
 app.delete('/api/products/:id/trash', validateDomain, productController.trashProduct);
 app.patch('/api/products/:id/recovery', validateDomain, productController.recoverProduct);
 app.delete('/api/products/:id', validateDomain, productController.deleteProduct);
+app.get('/products/search',  validateDomain, productController.searchProductsByTitle);
+
 
 
 app.use((req, res) => {

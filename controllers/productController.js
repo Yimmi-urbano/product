@@ -168,6 +168,46 @@ exports.getProductBySlug = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+exports.searchProductsByTitle = async (req, res) => {
+    try {
+        const domain = req.domain;
+        const { query } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 8;
+        const skip = (page - 1) * limit;
+
+        console.log(domain,query)
+
+        if (!query) {
+            return res.status(400).json({ message: 'Query parameter is required' });
+        }
+
+        const filter = {
+            domain,
+            title: { $regex: query, $options: 'i' },
+            'is_trash.status': false
+        };
+
+        const products = await DomainProductModel.find(filter)
+            .skip(skip)
+            .limit(limit)
+            .select('_id stock is_available image_default title price description_short slug');
+
+        const totalProducts = await DomainProductModel.countDocuments(filter);
+
+        res.json({
+            products,
+            page,
+            totalPages: Math.ceil(totalProducts / limit),
+            totalProducts
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 /* Descomentar cuando se tenga la funcionalidad de papelera para los clientes
 exports.trashProduct = async (req, res) => {
     try {
