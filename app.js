@@ -1,8 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const productController = require('./controllers/productController');
-const validateDomain = require('./middlewares/validateDomain');
+const productRouter = require('./api/products/products.router');
+const attributesRouter = require('./api/attributes/attribute.router');
+const variationsRouter = require('./api/variations/variations.router');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -10,17 +11,9 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-app.post('/api/products', validateDomain, productController.createProduct);
-app.get('/api/products', validateDomain, productController.getProducts);
-app.get('/api/products/:id', validateDomain, productController.getProductById);
-app.patch('/api/products/:id', validateDomain, productController.updateProduct);
-app.get('/api/products/category/:categorySlug', validateDomain, productController.getProductsByCategory);
-app.get('/api/client/products/:slug', validateDomain, productController.getProductBySlug);
-app.delete('/api/products/:id/trash', validateDomain, productController.trashProduct);
-app.patch('/api/products/:id/recovery', validateDomain, productController.recoverProduct);
-app.delete('/api/products/:id', validateDomain, productController.deleteProduct);
-app.get('/products/search',  validateDomain, productController.searchProductsByTitle);
-
+app.use('/api/products', productRouter);
+app.use('/api/attributes', attributesRouter);
+app.use('/api/variations', variationsRouter);
 
 
 app.use((req, res) => {
