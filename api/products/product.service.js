@@ -42,7 +42,9 @@ async function getProductById(domain, id) {
 }
 
 async function updateProduct(domain, id, updateData) {
+
     const product = await Product.findOne({ domain, _id: id });
+
     if (!product) return null;
 
     if (updateData.title) {
@@ -50,6 +52,7 @@ async function updateProduct(domain, id, updateData) {
     }
 
     Object.assign(product, updateData);
+
     return product.save();
 }
 

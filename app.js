@@ -15,7 +15,6 @@ app.use('/api/products', productRouter);
 app.use('/api/attributes', attributesRouter);
 app.use('/api/variations', variationsRouter);
 
-
 app.use((req, res) => {
     res.status(404).json({ message: 'Not found' });
 });
