@@ -18,6 +18,16 @@ const ProductSchema = new mongoose.Schema({
     stock: { type: Number, default: 0 }, 
     category: [{ type: Object }],
     is_available: { type: Boolean, required: true },
+    stock: { type: Number, default: 0 },
+    category: [{ type: Object }],
+    is_available: { type: Boolean, required: true },
+    order: { type: Number, default: 0 },
+    order_categorie: [
+        {
+            categorie: { type: String, required: true },
+            order: { type: Number, default: 0 }
+        }
+    ],
     default_variations: [{ type: String }],
     description_long: { type: String },
     description_short: { type: String },

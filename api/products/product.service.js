@@ -9,7 +9,13 @@ const {
     countByCategorySlug,
     searchByTitle,
     countByTitle,
-    getProductBySlugs
+    getProductBySlugs,
+    applyPromotionsToProducts,
+    updateProductsOrder,
+    updateProductsOrderByCategory,
+    updateProductOrderById,
+    updatePreviousOrder,
+    updateNextOrder
 } = require('./product.dao');
 
 async function generateUniqueSlug(domain, title, excludeId = null) {
@@ -60,6 +66,7 @@ async function deleteProduct(domain, id) {
     return Product.deleteOne({ domain, _id: id });
 }
 
+
 async function getProductsByCategory(domain, slug, page, perPage) {
     const skip = (page - 1) * perPage;
     const products = await findByCategorySlug(domain, slug, skip, perPage);
@@ -79,6 +86,52 @@ async function getProductBySlug(domain, slug) {
 }
 
 
+/**
+ * Actualizar orden general de productos
+ */
+const updateOrder = async (updates) => {
+    if (!Array.isArray(updates)) {
+        throw new Error("El body debe ser un array de productos con id_product y order");
+    }
+
+    return await updateProductsOrder(updates);
+};
+
+/**
+ * Actualizar orden de productos por categoría
+ */
+const updateOrderByCategory = async (updates, name_category) => {
+    if (!Array.isArray(updates)) {
+        throw new Error("El body debe ser un array de productos con id_product y order");
+    }
+    return await updateProductsOrderByCategory(updates, name_category);
+};
+
+const updateSingleProductOrder = async ({ id_product, order, order_type }) => {
+    try {
+        
+        const [previousUpdated, updatedProduct] = await Promise.all([
+            order_type === "prev" ? updatePreviousOrder(order) : updateNextOrder(order),
+            updateProductOrderById(id_product, order)
+        ]);
+
+        return {
+            success: true,
+            message: "Orden de producto actualizado",
+            result: {
+                updatedProduct,
+                previousUpdated
+            }
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: "Error al actualizar el orden",
+            error: error.message
+        };
+    }
+};
+
 module.exports = {
     createProduct,
     getProducts,
@@ -87,5 +140,8 @@ module.exports = {
     deleteProduct,
     getProductsByCategory,
     searchProducts,
-    getProductBySlug
+    getProductBySlug,
+    updateOrder,
+    updateOrderByCategory,
+    updateSingleProductOrder
 };

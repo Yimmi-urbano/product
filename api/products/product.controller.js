@@ -12,9 +12,9 @@ exports.create = async (req, res) => {
 exports.list = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 8;
+        const limit = 10;
         const { products, total } = await service.getProducts(req.domain, page, limit);
-        res.json({ products, page, totalPages: Math.ceil(total / limit), totalProducts: total });
+        res.json({ products, page, totalPages: Math.ceil(total / limit), totalProducts: total, limit });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -52,7 +52,7 @@ exports.remove = async (req, res) => {
 exports.byCategory = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const perPage = 8;
+        const perPage = 10;
         const { products, total } = await service.getProductsByCategory(req.domain, req.params.categorySlug, page, perPage);
         res.json({ products, currentPage: page, totalPages: Math.ceil(total / perPage), totalRecords: total });
     } catch (err) {
@@ -83,13 +83,52 @@ exports.getProductBySlug = async (req, res) => {
 exports.search = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 8;
+
+        const limit = 10;
         const query = req.query.query;
         if (!query) return res.status(400).json({ message: 'Query required' });
-
         const { products, total } = await service.searchProducts(req.domain, query, page, limit);
         res.json({ products, page, totalPages: Math.ceil(total / limit), totalProducts: total });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+
+exports.updateProductOrder = async (req, res) => {
+    try {
+        const result = await service.updateOrder(req.body);
+        res.json({ success: true, message: "Orden de productos actualizado", result });
+    } catch (error) {
+        console.error("updateProductOrder error:", error);
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.updateProductOrderByCategory = async (req, res) => {
+    try {
+        const { name_category } = req.params;
+        const result = await service.updateOrderByCategory(req.body, name_category);
+        res.json({ success: true, message: `Orden en categoría '${name_category}' actualizado`, result });
+    } catch (error) {
+        console.error("updateProductOrderByCategory error:", error);
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.updateSingleProductOrderController = async (req, res) => {
+    try {
+        const body = req.body;
+        const result = await service.updateSingleProductOrder(body);
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error en el controlador",
+            error: error.message
+        });
     }
 };

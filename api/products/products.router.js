@@ -14,5 +14,8 @@ router.patch('/:id', validateDomain, controller.update);
 router.delete('/:id/trash', validateDomain,  controller.remove);
 router.get('/slug/:slug', validateDomain, controller.getProductBySlug);
 router.get('/client/:slug', validateDomain, controller.getProductBySlug);
+router.patch('/sorter_custom', validateDomain, controller.updateProductOrder);
+router.patch("/sorter_custom/update-order-single", validateDomain,  controller.updateSingleProductOrderController);
+router.patch('/sorter_custom/category/:name_category', validateDomain, controller.updateProductOrderByCategory);
 
 module.exports = router;
