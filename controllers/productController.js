@@ -36,7 +36,7 @@ exports.getProducts = async (req, res) => {
         const domain = req.domain;
 
         const page = parseInt(req.query.page) || 1;
-        const limit = 8;
+        const limit = 10;
         const skip = (page - 1) * limit;
 
         const products = await DomainProductModel.find({
@@ -255,7 +255,6 @@ exports.trashProduct = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 exports.recoverProduct = async (req, res) => {
     try {

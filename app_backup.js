@@ -204,7 +204,9 @@ app.post('/api/products', async (req, res) => {
 
 // Actualizar un producto
 app.patch('/api/products/:id', async (req, res) => {
+    
     try {
+
         const domain = req.headers['domain'];
         if (!domain) {
             return res.status(400).json({ message: 'Domain header is required' });
