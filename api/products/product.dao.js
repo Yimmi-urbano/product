@@ -1,6 +1,7 @@
 const Product = require('./product.model');
 const Variation = require('../variations/variations.model');
 const Attribute = require('../attributes/attribute.model');
+
 const Promotion = require('../../models/promotions.model');
 
 async function applyPromotionsToProducts(domain, productsInput) {
@@ -151,6 +152,7 @@ async function getProductBySlugs(domain, slug) {
 const findById = (domain, id) =>
     Product.findOne({ domain, _id: id, 'is_trash.status': false });
 
+
 const findAll = async (domain, skip, limit) => {
     const products = await Product.find({ domain, 'is_trash.status': false })
         .sort({ order: 1 }) // 👈 Ordena por "order" ascendente
@@ -165,7 +167,6 @@ const findAll = async (domain, skip, limit) => {
         order: product.order ?? skip + ++index,
     }));
 };
-
 
 const countAll = (domain) =>
     Product.countDocuments({ domain, 'is_trash.status': false });
@@ -256,4 +257,5 @@ module.exports = {
     updateProductOrderById,
     updatePreviousOrder,
     updateNextOrder
+
 };

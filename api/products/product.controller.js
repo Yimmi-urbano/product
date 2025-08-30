@@ -83,6 +83,7 @@ exports.getProductBySlug = async (req, res) => {
 exports.search = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
+
         const limit = 10;
         const query = req.query.query;
         if (!query) return res.status(400).json({ message: 'Query required' });
@@ -92,6 +93,7 @@ exports.search = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 exports.updateProductOrder = async (req, res) => {
     try {

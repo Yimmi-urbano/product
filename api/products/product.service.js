@@ -67,14 +67,10 @@ async function deleteProduct(domain, id) {
 }
 
 
-async function getProductsByCategory(domain, categorySlug, page, perPage) {
+async function getProductsByCategory(domain, slug, page, perPage) {
     const skip = (page - 1) * perPage;
-    let products = await findByCategorySlug(domain, categorySlug, skip, perPage);
-    const total = await countByCategorySlug(domain, categorySlug);
-
-    if (products && products.length > 0) {
-        products = await applyPromotionsToProducts(domain, products);
-    }
+    const products = await findByCategorySlug(domain, slug, skip, perPage);
+    const total = await countByCategorySlug(domain, slug);
     return { products, total };
 }
 
@@ -88,6 +84,7 @@ async function searchProducts(domain, query, page, limit) {
 async function getProductBySlug(domain, slug) {
     return await getProductBySlugs(domain, slug);
 }
+
 
 /**
  * Actualizar orden general de productos
@@ -134,9 +131,6 @@ const updateSingleProductOrder = async ({ id_product, order, order_type }) => {
         };
     }
 };
-
-
-
 
 module.exports = {
     createProduct,
