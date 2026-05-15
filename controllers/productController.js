@@ -36,7 +36,7 @@ exports.getProducts = async (req, res) => {
         const domain = req.domain;
 
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
         const products = await DomainProductModel.find({
@@ -124,7 +124,7 @@ exports.getProductsByCategory = async (req, res) => {
         const domain = req.domain;
         const categorySlug = req.params.categorySlug;
         const page = parseInt(req.query.page) || 1;
-        const perPage = 8;
+        const perPage = parseInt(req.query.limit) || 8;
 
         const filteredProducts = await DomainProductModel.find({ 
             domain, 
@@ -174,7 +174,7 @@ exports.searchProductsByTitle = async (req, res) => {
         const domain = req.domain;
         const { query } = req.query;
         const page = parseInt(req.query.page) || 1;
-        const limit = 8;
+        const limit = parseInt(req.query.limit) || 8;
         const skip = (page - 1) * limit;
 
         console.log(domain,query)
