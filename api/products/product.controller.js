@@ -12,7 +12,7 @@ exports.create = async (req, res) => {
 exports.list = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = parseInt(req.query.limit) || 10;
         const { products, total } = await service.getProducts(req.domain, page, limit);
         res.json({ products, page, totalPages: Math.ceil(total / limit), totalProducts: total, limit });
     } catch (err) {
@@ -52,7 +52,7 @@ exports.remove = async (req, res) => {
 exports.byCategory = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const perPage = 10;
+        const perPage = parseInt(req.query.limit) || 10;
         const { products, total } = await service.getProductsByCategory(req.domain, req.params.categorySlug, page, perPage);
         res.json({ products, currentPage: page, totalPages: Math.ceil(total / perPage), totalRecords: total });
     } catch (err) {
@@ -83,8 +83,7 @@ exports.getProductBySlug = async (req, res) => {
 exports.search = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-
-        const limit = 10;
+        const limit = parseInt(req.query.limit) || 10;
         const query = req.query.query;
         if (!query) return res.status(400).json({ message: 'Query required' });
         const { products, total } = await service.searchProducts(req.domain, query, page, limit);
