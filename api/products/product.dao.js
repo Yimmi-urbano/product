@@ -158,7 +158,7 @@ const findAll = async (domain, skip, limit) => {
         .sort({ order: 1 }) // 👈 Ordena por "order" ascendente
         .skip(skip)
         .limit(limit)
-        .select('_id stock is_available image_default title price description_short slug order order_categorie')
+        .select('_id stock is_available image_default title price description_short slug order order_categorie type_product')
         .lean();
 
     return products.map((product, index) => ({
@@ -174,7 +174,8 @@ const countAll = (domain) =>
 const findByCategorySlug = (domain, slug, skip, limit) =>
     Product.find({ domain, 'category.slug': slug, 'is_trash.status': false })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .select('_id stock is_available image_default title price description_short slug type_product');
 
 const countByCategorySlug = (domain, slug) =>
     Product.countDocuments({ domain, 'category.slug': slug, 'is_trash.status': false });
@@ -183,7 +184,7 @@ const searchByTitle = (domain, query, skip, limit) =>
     Product.find({ domain, title: { $regex: query, $options: 'i' }, 'is_trash.status': false })
         .skip(skip)
         .limit(limit)
-        .select('_id stock is_available image_default title price description_short slug');
+        .select('_id stock is_available image_default title price description_short slug type_product');
 
 const countByTitle = (domain, query) =>
     Product.countDocuments({ domain, title: { $regex: query, $options: 'i' }, 'is_trash.status': false });
