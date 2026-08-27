@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const productRouter = require('./api/products/products.router');
+const v2ProductRouter = require('./api/v2/products/products.router');
 const attributesRouter = require('./api/attributes/attribute.router');
 const variationsRouter = require('./api/variations/variations.router');
 const errorHandler = require('./middlewares/errorHandler');
@@ -12,6 +13,8 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.use('/api/products', productRouter);
+app.use('/v1/products', v2ProductRouter);
+app.use('/v2/products', v2ProductRouter);
 app.use('/api/attributes', attributesRouter);
 app.use('/api/variations', variationsRouter);
 
