@@ -1,0 +1,199 @@
+{
+  "info": {
+    "_postman_id": "6f0a2f0d-7ed2-4f5e-b449-products-v2",
+    "name": "CreceIdea Products API v2",
+    "description": "Requests para probar los endpoints GET de productos v2.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List products",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "sortBy",
+              "value": "createdAt",
+              "disabled": true
+            },
+            {
+              "key": "sortOrder",
+              "value": "desc",
+              "disabled": true
+            },
+            {
+              "key": "featured",
+              "value": "true",
+              "disabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Search products",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products/search?query={{searchQuery}}&page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "query",
+              "value": "{{searchQuery}}"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Products by category",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products/category/{{categorySlug}}?page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products",
+            "category",
+            "{{categorySlug}}"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Product by slug",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products/slug/{{productSlug}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products",
+            "slug",
+            "{{productSlug}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Product client by slug",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products/client/{{productSlug}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products",
+            "client",
+            "{{productSlug}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Product by id",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Domain",
+            "value": "{{domain}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/v2/products/{{productId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "v2",
+            "products",
+            "{{productId}}"
+          ]
+        }
+      }
+    }
+  ]
+}
