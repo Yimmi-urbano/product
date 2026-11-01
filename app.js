@@ -5,6 +5,7 @@ const productRouter = require('./api/products/products.router');
 const v2ProductRouter = require('./api/v2/products/products.router');
 const attributesRouter = require('./api/attributes/attribute.router');
 const variationsRouter = require('./api/variations/variations.router');
+const inventoryRouter = require('./api/inventory/inventory.router');
 const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use('/v1/products', v2ProductRouter);
 app.use('/v2/products', v2ProductRouter);
 app.use('/api/attributes', attributesRouter);
 app.use('/api/variations', variationsRouter);
+app.use('/api/inventory', inventoryRouter);
 
 app.use((req, res) => {
     res.status(404).json({ message: 'Not found' });
