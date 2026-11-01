@@ -1,4 +1,7 @@
 const slugify = require('slugify');
+const mongoose = require('mongoose');
+const inventoryService = require('../inventory/inventory.service');
+const { InventoryItem } = require('../inventory/inventory.models');
 const {
     Product,
     findByDomainAndSlug,
@@ -32,8 +35,41 @@ async function generateUniqueSlug(domain, title, excludeId = null) {
 
 async function createProduct(domain, data) {
     const slug = await generateUniqueSlug(domain, data.title);
-    const product = new Product({ ...data, slug, domain });
-    return product.save();
+    const initialStock = Math.max(0, Number(data.stock) || 0);
+    const initialCost = data.cost_price ?? data.purchase_price;
+    const hasInitialInventory = initialStock > 0 && Number.isFinite(Number(initialCost)) && Number(initialCost) >= 0;
+    const session = await mongoose.startSession();
+    let product;
+    try {
+        await session.withTransaction(async () => {
+            product = new Product({
+                ...data,
+                slug,
+                domain,
+                stock: data.type_product === 'variable' || hasInitialInventory ? 0 : initialStock,
+                cost_price: initialCost === undefined || initialCost === null || initialCost === ''
+                    ? null
+                    : Number(initialCost)
+            });
+            await product.save({ session });
+            if (hasInitialInventory && data.type_product !== 'variable') {
+                await inventoryService.createEntry(domain, {
+                    date: data.inventory_date,
+                    notes: 'Stock inicial creado con el producto',
+                    lines: [{
+                        productId: product._id,
+                        name: product.title,
+                        quantity: initialStock,
+                        unitCost: Number(initialCost),
+                        unit: 'unit'
+                    }]
+                }, { session });
+            }
+        });
+        return Product.findById(product._id);
+    } finally {
+        await session.endSession();
+    }
 }
 
 async function getProducts(domain, page, limit) {
@@ -55,6 +91,13 @@ async function updateProduct(domain, id, updateData) {
 
     if (updateData.title) {
         updateData.slug = await generateUniqueSlug(domain, updateData.title, id);
+    }
+
+    const inventoryItem = await InventoryItem.exists({ tenantId: domain, productId: id, variationId: null });
+    if (inventoryItem) {
+        delete updateData.stock;
+        delete updateData.cost_price;
+        delete updateData.purchase_price;
     }
 
     Object.assign(product, updateData);

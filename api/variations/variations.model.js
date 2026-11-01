@@ -11,6 +11,7 @@ const variationSchema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true },
   attributes: { type: Object, required: true },
   price: { type: priceSchema, required: true },
+  cost_price: { type: Number, min: 0, default: null },
   stock: { type: Number, required: true },
   image: { type: String },
   isAvailable: { type: Boolean, default: true },

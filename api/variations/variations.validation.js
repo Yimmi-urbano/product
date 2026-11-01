@@ -9,6 +9,7 @@ const variationSchema = Joi.object({
     sale: Joi.number().optional(),
   }).required(),
   stock: Joi.number().required(),
+  cost_price: Joi.number().min(0).allow(null).optional(),
   image: Joi.string().optional(),
   isAvailable: Joi.boolean().optional(),
 });
