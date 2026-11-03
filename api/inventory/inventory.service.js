@@ -74,6 +74,21 @@ function planFifoAllocations(lots, requestedQuantity) {
     return plan;
 }
 
+function incrementStockSafely(delta) {
+    const parsedDelta = Number(delta);
+    if (!Number.isFinite(parsedDelta)) throw new InventoryError('El ajuste de stock no es válido.');
+    return [{
+        $set: {
+            stock: {
+                $add: [
+                    { $convert: { input: '$stock', to: 'double', onError: 0, onNull: 0 } },
+                    parsedDelta
+                ]
+            }
+        }
+    }];
+}
+
 async function ensureDefaults(tenantId, session = null) {
     const options = { new: true, upsert: true, setDefaultsOnInsert: true, ...(session ? { session } : {}) };
     const warehouse = await Warehouse.findOneAndUpdate(
@@ -147,19 +162,19 @@ async function updateStockSnapshot(item, delta, session) {
         await Promise.all([
             Variation.updateOne(
                 { _id: item.variationId, tenantId: item.tenantId },
-                { $inc: { stock: delta } },
+                incrementStockSafely(delta),
                 { session }
             ),
             Product.updateOne(
                 { _id: item.productId, domain: item.tenantId },
-                { $inc: { stock: delta } },
+                incrementStockSafely(delta),
                 { session }
             )
         ]);
     } else if (item.productId) {
         await Product.updateOne(
             { _id: item.productId, domain: item.tenantId },
-            { $inc: { stock: delta } },
+            incrementStockSafely(delta),
             { session }
         );
     }
@@ -640,6 +655,7 @@ module.exports = {
     toMinor,
     fromMinor,
     planFifoAllocations,
+    incrementStockSafely,
     ensureDefaults,
     createEntry,
     bootstrapExistingStock,

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { InventoryError, toMinor, fromMinor, planFifoAllocations } = require('../api/inventory/inventory.service');
+const { InventoryError, toMinor, fromMinor, planFifoAllocations, incrementStockSafely } = require('../api/inventory/inventory.service');
 
 test('convierte importes a centavos sin errores de punto flotante', () => {
     assert.equal(toMinor(10.10), 1010);
@@ -29,4 +29,17 @@ test('FIFO rechaza una salida mayor al stock disponible', () => {
         () => planFifoAllocations([{ availableQuantity: 2, unitCostMinor: 100 }], 3),
         (error) => error instanceof InventoryError && error.status === 409
     );
+});
+
+test('normaliza stock legado nulo antes de incrementar', () => {
+    assert.deepEqual(incrementStockSafely(5), [{
+        $set: {
+            stock: {
+                $add: [
+                    { $convert: { input: '$stock', to: 'double', onError: 0, onNull: 0 } },
+                    5
+                ]
+            }
+        }
+    }]);
 });
