@@ -43,11 +43,14 @@ function objectId(value, label) {
 
 function rangeDate(value, endOfDay = false) {
     if (!value) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
+        const time = endOfDay ? '23:59:59.999' : '00:00:00.000';
+        const peruDate = new Date(`${value}T${time}-05:00`);
+        if (Number.isNaN(peruDate.valueOf())) throw new InventoryError('El rango de fechas no es válido.');
+        return peruDate;
+    }
     const parsed = new Date(value);
     if (Number.isNaN(parsed.valueOf())) throw new InventoryError('El rango de fechas no es válido.');
-    if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
-        parsed.setUTCHours(23, 59, 59, 999);
-    }
     return parsed;
 }
 
@@ -665,6 +668,7 @@ module.exports = {
     InventoryError,
     toMinor,
     fromMinor,
+    rangeDate,
     planFifoAllocations,
     incrementStockSafely,
     ensureDefaults,

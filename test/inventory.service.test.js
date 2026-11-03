@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { InventoryError, toMinor, fromMinor, planFifoAllocations, incrementStockSafely } = require('../api/inventory/inventory.service');
+const { InventoryError, toMinor, fromMinor, rangeDate, planFifoAllocations, incrementStockSafely } = require('../api/inventory/inventory.service');
 
 test('convierte importes a centavos sin errores de punto flotante', () => {
     assert.equal(toMinor(10.10), 1010);
@@ -42,4 +42,9 @@ test('normaliza stock legado nulo antes de incrementar', () => {
             }
         }
     }]);
+});
+
+test('interpreta los rangos diarios en horario de Lima', () => {
+    assert.equal(rangeDate('2026-11-02').toISOString(), '2026-11-02T05:00:00.000Z');
+    assert.equal(rangeDate('2026-11-02', true).toISOString(), '2026-11-03T04:59:59.999Z');
 });
