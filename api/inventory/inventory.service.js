@@ -119,15 +119,26 @@ async function resolveInventoryItem(tenantId, line, session = null) {
         return item;
     }
 
-    const variationId = line.variationId ? objectId(line.variationId, 'La variación') : null;
-    const productId = line.productId ? objectId(line.productId, 'El producto') : null;
+    let variationId = line.variationId ? objectId(line.variationId, 'La variación') : null;
+    let productId = line.productId ? objectId(line.productId, 'El producto') : null;
     if (!variationId && !productId) throw new InventoryError('Cada línea requiere un producto, una variación o un artículo inventariable.');
 
     let source;
     let key;
     let type;
+    if (!variationId && line.variationSku) {
+        source = await Variation.findOne({
+            tenantId,
+            sku: String(line.variationSku),
+            ...(productId ? { productId } : {}),
+            isTrash: false
+        }).session(session);
+        if (!source) throw new InventoryError('La variación indicada no existe.', 404);
+        variationId = source._id;
+        productId = source.productId;
+    }
     if (variationId) {
-        source = await Variation.findOne({ _id: variationId, tenantId, isTrash: false }).session(session);
+        source = source || await Variation.findOne({ _id: variationId, tenantId, isTrash: false }).session(session);
         key = `variation:${variationId}`;
         type = 'variant';
     } else {
