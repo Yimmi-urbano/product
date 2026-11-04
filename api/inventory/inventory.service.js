@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { dateKeyToInstant, getDateKeyInTimeZone, getDomainTimeZone, rangeDate } = require('../../services/domainTimeZoneService');
 const Product = require('../products/product.model');
 const Variation = require('../variations/variations.model');
 const {
@@ -39,19 +40,6 @@ function quantity(value) {
 function objectId(value, label) {
     if (!mongoose.isValidObjectId(value)) throw new InventoryError(`${label} no es válido.`);
     return new mongoose.Types.ObjectId(value);
-}
-
-function rangeDate(value, endOfDay = false) {
-    if (!value) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
-        const time = endOfDay ? '23:59:59.999' : '00:00:00.000';
-        const peruDate = new Date(`${value}T${time}-05:00`);
-        if (Number.isNaN(peruDate.valueOf())) throw new InventoryError('El rango de fechas no es válido.');
-        return peruDate;
-    }
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.valueOf())) throw new InventoryError('El rango de fechas no es válido.');
-    return parsed;
 }
 
 function planFifoAllocations(lots, requestedQuantity) {
@@ -286,12 +274,17 @@ async function createEntryInSession(tenantId, data, session) {
 }
 
 async function createEntry(tenantId, data, options = {}) {
-    if (options.session) return createEntryInSession(tenantId, data, options.session);
+    let entryData = data;
+    if (typeof data.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
+        const timeZone = await getDomainTimeZone(tenantId);
+        entryData = { ...data, date: dateKeyToInstant(data.date, timeZone) };
+    }
+    if (options.session) return createEntryInSession(tenantId, entryData, options.session);
     const session = await mongoose.startSession();
     let entry;
     try {
         await session.withTransaction(async () => {
-            entry = await createEntryInSession(tenantId, data, session);
+            entry = await createEntryInSession(tenantId, entryData, session);
         });
         return entry;
     } finally {
@@ -513,8 +506,10 @@ async function reverseMovement(tenantId, movementId, data = {}) {
 
 async function getSummary(tenantId, query = {}) {
     await ensureDefaults(tenantId);
-    const start = rangeDate(query.from) || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    const end = rangeDate(query.to, true) || new Date();
+    const timeZone = await getDomainTimeZone(tenantId);
+    const today = getDateKeyInTimeZone(new Date(), timeZone);
+    const start = rangeDate(query.from, timeZone) || rangeDate(`${today.slice(0, 7)}-01`, timeZone);
+    const end = rangeDate(query.to, timeZone, true) || new Date();
     if (start > end) throw new InventoryError('La fecha inicial no puede ser posterior a la fecha final.');
     const [valuation] = await InventoryLot.aggregate([
         { $match: { tenantId, availableQuantity: { $gt: 0 }, status: 'open' } },
