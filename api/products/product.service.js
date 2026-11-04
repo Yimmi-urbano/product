@@ -1,6 +1,7 @@
 const slugify = require('slugify');
 const mongoose = require('mongoose');
 const inventoryService = require('../inventory/inventory.service');
+const { dateKeyToInstant, getDomainTimeZone } = require('../../services/domainTimeZoneService');
 const { InventoryItem } = require('../inventory/inventory.models');
 const {
     Product,
@@ -38,6 +39,10 @@ async function createProduct(domain, data) {
     const initialStock = Math.max(0, Number(data.stock) || 0);
     const initialCost = data.cost_price ?? data.purchase_price;
     const hasInitialInventory = initialStock > 0 && Number.isFinite(Number(initialCost)) && Number(initialCost) >= 0;
+    let inventoryDate = data.inventory_date;
+    if (typeof inventoryDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(inventoryDate)) {
+        inventoryDate = dateKeyToInstant(inventoryDate, await getDomainTimeZone(domain));
+    }
     const session = await mongoose.startSession();
     let product;
     try {
@@ -54,7 +59,7 @@ async function createProduct(domain, data) {
             await product.save({ session });
             if (hasInitialInventory && data.type_product !== 'variable') {
                 await inventoryService.createEntry(domain, {
-                    date: data.inventory_date,
+                    date: inventoryDate,
                     notes: 'Stock inicial creado con el producto',
                     lines: [{
                         productId: product._id,
